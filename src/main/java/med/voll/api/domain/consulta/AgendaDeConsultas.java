@@ -2,7 +2,9 @@ package med.voll.api.domain.consulta;
 
 import org.springframework.stereotype.Service;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import med.voll.api.controller.DadosCancelamentoConsulta;
 import med.voll.api.domain.medico.Medico;
 import med.voll.api.domain.medico.MedicoRepository;
 import med.voll.api.domain.paciente.PacienteRepository;
@@ -23,7 +25,7 @@ public class AgendaDeConsultas {
 
         var medico1 = chooseRandomDoctor(dadosAgendamentoConsulta);
 
-        var consulta = new Consulta(null, medico, paciente, dadosAgendamentoConsulta.data());
+        var consulta = new Consulta(null, medico, paciente, dadosAgendamentoConsulta.data(), null);
         consultaRepository.save(consulta);
     }
 
@@ -39,6 +41,13 @@ public class AgendaDeConsultas {
 
         return medicoRepository.escolherMedicoAleatorioLivreNaData(dadosAgendamentoConsulta.especialidade(),
                 dadosAgendamentoConsulta.data());
+    }
+
+    public void cancelar(@Valid DadosCancelamentoConsulta dados) {
+        var consulta = consultaRepository.findById(dados.idConsulta())
+                .orElseThrow(() -> new RuntimeException("Consulta não encontrada"));
+
+        consulta.cancelar(dados.motivo());
     }
 
 }
