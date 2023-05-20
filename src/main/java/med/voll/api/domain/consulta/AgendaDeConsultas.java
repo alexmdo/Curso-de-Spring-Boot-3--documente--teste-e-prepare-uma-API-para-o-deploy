@@ -16,8 +16,10 @@ public class AgendaDeConsultas {
     private final PacienteRepository pacienteRepository;
 
     public void agendar(DadosAgendamentoConsulta dadosAgendamentoConsulta) {
-        var paciente = pacienteRepository.findById(dadosAgendamentoConsulta.idPaciente()).orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
-        var medico = medicoRepository.findById(dadosAgendamentoConsulta.idMedico()).orElseThrow(() -> new RuntimeException("Médico não encontrado"));
+        var paciente = pacienteRepository.findById(dadosAgendamentoConsulta.idPaciente())
+                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
+        var medico = medicoRepository.findById(dadosAgendamentoConsulta.idMedico())
+                .orElseThrow(() -> new RuntimeException("Médico não encontrado"));
 
         var medico1 = chooseRandomDoctor(dadosAgendamentoConsulta);
 
@@ -26,7 +28,17 @@ public class AgendaDeConsultas {
     }
 
     private Medico chooseRandomDoctor(DadosAgendamentoConsulta dadosAgendamentoConsulta) {
-        return null;
+        if (dadosAgendamentoConsulta.idMedico() != null) {
+            return medicoRepository.findById(dadosAgendamentoConsulta.idMedico())
+                    .orElseThrow(() -> new RuntimeException("Médico não encontrado"));
+        }
+
+        if (dadosAgendamentoConsulta.especialidade() == null) {
+            throw new RuntimeException("Especialidade não informada");
+        }
+
+        return medicoRepository.escolherMedicoAleatorioLivreNaData(dadosAgendamentoConsulta.especialidade(),
+                dadosAgendamentoConsulta.data());
     }
 
 }
