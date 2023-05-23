@@ -1,10 +1,14 @@
 package med.voll.api.domain.consulta;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import med.voll.api.controller.DadosCancelamentoConsulta;
+import med.voll.api.domain.ValidacaoException;
+import med.voll.api.domain.consulta.validations.ValidadorAgendamentoDeConsulta;
 import med.voll.api.domain.medico.Medico;
 import med.voll.api.domain.medico.MedicoRepository;
 import med.voll.api.domain.paciente.PacienteRepository;
@@ -16,16 +20,20 @@ public class AgendaDeConsultas {
     private final ConsultaRepository consultaRepository;
     private final MedicoRepository medicoRepository;
     private final PacienteRepository pacienteRepository;
+    private final List<ValidadorAgendamentoDeConsulta> validadores;
 
     public void agendar(DadosAgendamentoConsulta dadosAgendamentoConsulta) {
         var paciente = pacienteRepository.findById(dadosAgendamentoConsulta.idPaciente())
-                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
-        var medico = medicoRepository.findById(dadosAgendamentoConsulta.idMedico())
-                .orElseThrow(() -> new RuntimeException("Médico não encontrado"));
+                .orElseThrow(() -> new ValidacaoException("Paciente não encontrado"));
+        if (!medicoRepository.existsById(dadosAgendamentoConsulta.idMedico())) {
+            throw new ValidacaoException("Médico não encontrado");
+        }
 
-        var medico1 = chooseRandomDoctor(dadosAgendamentoConsulta);
+        validadores.forEach(validador -> validador.validate(dadosAgendamentoConsulta));
 
-        var consulta = new Consulta(null, medico, paciente, dadosAgendamentoConsulta.data(), null);
+        var randomDoctor = chooseRandomDoctor(dadosAgendamentoConsulta);
+
+        var consulta = new Consulta(null, randomDoctor, paciente, dadosAgendamentoConsulta.data(), null);
         consultaRepository.save(consulta);
     }
 
