@@ -22,7 +22,7 @@ public class AgendaDeConsultas {
     private final PacienteRepository pacienteRepository;
     private final List<ValidadorAgendamentoDeConsulta> validadores;
 
-    public void agendar(DadosAgendamentoConsulta dadosAgendamentoConsulta) {
+    public DadosDetalhamentoConsulta agendar(DadosAgendamentoConsulta dadosAgendamentoConsulta) {
         var paciente = pacienteRepository.findById(dadosAgendamentoConsulta.idPaciente())
                 .orElseThrow(() -> new ValidacaoException("Paciente não encontrado"));
         if (!medicoRepository.existsById(dadosAgendamentoConsulta.idMedico())) {
@@ -32,9 +32,14 @@ public class AgendaDeConsultas {
         validadores.forEach(validador -> validador.validate(dadosAgendamentoConsulta));
 
         var randomDoctor = chooseRandomDoctor(dadosAgendamentoConsulta);
+        if (randomDoctor == null) {
+            throw new ValidacaoException("Não foi possível encontrar um médico disponível");
+        }
 
         var consulta = new Consulta(null, randomDoctor, paciente, dadosAgendamentoConsulta.data(), null);
         consultaRepository.save(consulta);
+
+        return new DadosDetalhamentoConsulta(consulta);
     }
 
     private Medico chooseRandomDoctor(DadosAgendamentoConsulta dadosAgendamentoConsulta) {
